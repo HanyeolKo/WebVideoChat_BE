@@ -72,7 +72,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           source: "app.jar,Dockerfile,docker-compose.yml,nginx/nginx.conf"
-          target: "/opt/webvideochat"
+          target: "/home/deploy/webvideochat"
 
       - name: Deploy on server via SSH
         uses: appleboy/ssh-action@v1.0.3
