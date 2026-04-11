@@ -1,0 +1,30 @@
+services:
+  app:
+    build: .
+    container_name: webvideochat-app
+    restart: always
+    env_file:
+      - .env
+    expose:
+      - "8080"
+    networks:
+      - webnet
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: webvideochat-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - app
+    networks:
+      - webnet
+
+networks:
+  webnet:
+    driver: bridge
