@@ -40,7 +40,13 @@ jobs:
         run: ./gradlew clean build
 
       - name: Rename JAR for deployment
-        run: cp build/libs/WebVideoChat-*.jar app.jar
+        run: |
+          JAR_FILE=$(find build/libs -maxdepth 1 -type f -name 'WebVideoChat-*.jar' ! -name '*-plain.jar' | head -n 1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "No runnable WebVideoChat JAR found in build/libs"
+            exit 1
+          fi
+          cp "$JAR_FILE" app.jar
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
