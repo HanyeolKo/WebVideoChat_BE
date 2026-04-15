@@ -72,7 +72,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           source: "app.jar,Dockerfile,docker-compose.yml,nginx/nginx.conf"
-          target: "/home/deploy/webvideochat"
+          target: "/home/deploy/backend"
 
       - name: Deploy on server via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -82,7 +82,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            cd /opt/webvideochat
+            cd /home/deploy/backend
             echo "CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}" > .env
             docker compose down
             docker compose build --no-cache
