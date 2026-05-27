@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build All Services
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -36,23 +36,24 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build with Gradle (includes tests)
-        run: ./gradlew clean build
+      - name: Build all services
+        run: ./gradlew clean build -x test
 
-      - name: Rename JAR for deployment
+      - name: Copy JARs to deploy directory
         run: |
-          JAR_FILE=$(find build/libs -maxdepth 1 -type f -name 'WebVideoChat-*.jar' ! -name '*-plain.jar' | head -n 1)
-          if [ -z "$JAR_FILE" ]; then
-            echo "No runnable WebVideoChat JAR found in build/libs"
-            exit 1
-          fi
-          cp "$JAR_FILE" app.jar
+          mkdir -p deploy/config-server deploy/discovery-server deploy/api-gateway \
+                   deploy/room-service deploy/signaling-service
+          cp config-server/build/libs/*.jar    deploy/config-server/app.jar
+          cp discovery-server/build/libs/*.jar deploy/discovery-server/app.jar
+          cp api-gateway/build/libs/*.jar      deploy/api-gateway/app.jar
+          cp room-service/build/libs/*.jar     deploy/room-service/app.jar
+          cp signaling-service/build/libs/*.jar deploy/signaling-service/app.jar
 
-      - name: Upload JAR artifact
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: app-jar
-          path: app.jar
+          name: service-jars
+          path: deploy/
           retention-days: 1
 
   deploy:
@@ -66,10 +67,22 @@ jobs:
       - name: Checkout (for deploy config files)
         uses: actions/checkout@v4
 
-      - name: Download JAR artifact
-        uses: actions/download-artifact@v4.1.8
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
         with:
-          name: app-jar
+          name: service-jars
+          path: deploy/
+
+      - name: Organize deploy structure
+        run: |
+          cp config-server/Dockerfile    deploy/config-server/Dockerfile
+          cp discovery-server/Dockerfile deploy/discovery-server/Dockerfile
+          cp api-gateway/Dockerfile      deploy/api-gateway/Dockerfile
+          cp room-service/Dockerfile     deploy/room-service/Dockerfile
+          cp signaling-service/Dockerfile deploy/signaling-service/Dockerfile
+          cp docker-compose.yml          deploy/docker-compose.yml
+          mkdir -p deploy/nginx
+          cp nginx/nginx.conf            deploy/nginx/nginx.conf
 
       - name: Copy files to server via SCP
         uses: appleboy/scp-action@v0.1.7
@@ -78,8 +91,9 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: "app.jar,Dockerfile,docker-compose.yml,nginx/nginx.conf"
+          source: "deploy/"
           target: "/home/deploy/webVideoChat/back-end"
+          strip_components: 1
 
       - name: Deploy on server via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -94,5 +108,5 @@ jobs:
             docker compose down
             docker compose build --no-cache
             docker compose up -d
-            sleep 5
+            sleep 10
             docker compose ps

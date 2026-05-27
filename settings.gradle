@@ -1,1 +1,6 @@
 rootProject.name = 'WebVideoChat'
+include 'config-server'
+include 'discovery-server'
+include 'api-gateway'
+include 'room-service'
+include 'signaling-service'

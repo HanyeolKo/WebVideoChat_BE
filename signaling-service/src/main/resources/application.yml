@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: signaling-service
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+
+# Config Server 미연결 시 로컬 폴백 설정
+server:
+  port: 8082
+
+spring.data.redis:
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    preferIpAddress: true
+
+room-service:
+  url: http://ROOM-SERVICE
