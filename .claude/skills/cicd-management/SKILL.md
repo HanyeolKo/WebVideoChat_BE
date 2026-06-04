@@ -7,14 +7,21 @@ description: WebVideoChat 백엔드의 GitHub Actions·Docker·nginx·배포 파
 
 WebVideoChat 백엔드의 CI/CD와 인프라 파일을 관리한다. **GitHub Actions는 이 스킬·devops 에이전트를 통해 관리한다.** devops 에이전트가 참조한다.
 
-## 배포 아키텍처 (GHCR + 온프레미스 자동 트리거)
+## 배포 아키텍처 (GHCR + self-hosted 러너)
 
-> **GitHub Actions의 책임은 "이미지 빌드 → GHCR push"까지다.** 서버에 SSH로 접속하지 않는다. 서버 배포는 온프레미스 서버의 감지 에이전트(Watchtower 또는 자체 webhook 수신기)가 새 `:latest`를 감지해 `docker compose pull && up -d`로 수행한다(서버 설정, 레포 밖).
+> 빌드와 배포를 잡으로 분리한다. **build-and-push**는 GitHub 클라우드 러너(`ubuntu-latest`)에서 이미지를 빌드해 GHCR에 push, **deploy**는 배포서버의 **self-hosted 러너**에서 `docker compose pull && up -d`를 수행한다. SSH·webhook·Watchtower 불필요(GitHub이 잡을 서버 러너로 직접 디스패치).
 
 ```
-push(master) → Actions: 멀티스테이지 빌드(gradle build 포함) → GHCR :latest → [서버 감지] → pull&재기동
-push(v*)     → Actions: 빌드 → GHCR :<tag>  (버전 스냅샷 / 롤백 대상)
+push(master) → build-and-push(클라우드): 멀티스테이지 빌드(gradle build 포함) → GHCR :latest
+             → deploy(self-hosted): cd $DEPLOY_DIR && docker compose pull && up -d
+push(v*)     → build-and-push: GHCR :<tag> 보관 (배포 안 함 / 롤백 대상)
 ```
+
+### 보안 — public 레포 + self-hosted 러너 (필수)
+- deploy 잡은 self-hosted 러너에서 돈다. 포크 PR이 서버에서 임의 코드를 실행하지 못하도록:
+  - 워크플로우에 **`pull_request` 트리거를 절대 두지 않는다.**
+  - deploy 잡에 **`if`로 "기본 브랜치 push 또는 workflow_dispatch"** 조건을 건다.
+- 이 두 가지가 깨지면 public 레포에서 서버가 노출된다. 변경 시 반드시 유지.
 
 ## 현재 파이프라인 (`.github/workflows/deploy.yml`)
 
@@ -22,6 +29,7 @@ push(v*)     → Actions: 빌드 → GHCR :<tag>  (버전 스냅샷 / 롤백 대
 - `permissions: packages: write` + 빌트인 `GITHUB_TOKEN`으로 GHCR 로그인 → **별도 GHCR 시크릿 불필요.**
 - `docker/metadata-action`으로 태그 결정(`type=raw latest enable=is_default_branch`, `type=ref event=tag`), `build-push-action`으로 push.
 - 이미지: `ghcr.io/hanyeolko/webvideochat-be`.
+- **deploy 잡**: `runs-on: [self-hosted]`, `needs: build-and-push`, `env.DEPLOY_DIR=/home/deploy/webVideoChat/back-end`. GHCR 로그인(GITHUB_TOKEN) → `docker compose pull && up -d`. 서버 compose는 `image: ...:${IMAGE_TAG:-latest}`라 `IMAGE_TAG=<tag>`로 롤백 가능.
 
 ## 인프라 파일
 
@@ -46,10 +54,14 @@ push(v*)     → Actions: 빌드 → GHCR :<tag>  (버전 스냅샷 / 롤백 대
 - **비밀 노출 금지.** 시크릿은 이름만 참조.
 - **부재 파일/서버 설정 임의 생성 금지.** 서버 측(감지 에이전트, 호스트 nginx, 인증서, `.env`)은 레포 밖이다. 필요하면 README/문서로 절차만 제시하고 사용자 확인.
 
-## 다음 단계 (미완)
+## 서버 준비물 (레포 밖)
+- repo Settings → Actions → Runners에 **self-hosted 러너 등록**(repo별 1개), 서비스 상주.
+- Docker + compose, 러너 계정 `docker` 그룹.
+- `$DEPLOY_DIR`에 compose(`image: ...:${IMAGE_TAG:-latest}`) + nginx.conf + 인증서 + `.env`(`CORS_ALLOWED_ORIGINS`).
 
-- 서버 측 **webhook 수신기 + rollback 지원 `deploy.sh`** 구성(롤백 유지 목적). 서버 URL/시크릿/롤백 정책 확정 후 진행.
-- PR/푸시용 **CI 검증 워크플로우**(gradle build+test 별도) 신설 — 현재는 이미지 빌드 시 테스트가 돌므로 후순위.
+## 다음 단계 (미완)
+- deploy 잡에 **헬스체크 + 자동 롤백**(실패 시 직전 태그로 복귀) 보강.
+- PR/푸시용 **CI 검증 워크플로우**(gradle build+test 별도) — 현재는 이미지 빌드 시 테스트가 돌므로 후순위.
 
 ## 검증 명령
 
