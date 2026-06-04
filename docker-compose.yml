@@ -1,6 +1,7 @@
 services:
   app:
-    build: .
+    # GHCR에 push된 이미지를 pull하여 사용한다(서버는 빌드하지 않음).
+    image: ghcr.io/hanyeolko/webvideochat-be:latest
     container_name: webvideochat-app
     restart: always
     env_file:

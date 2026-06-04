@@ -16,3 +16,4 @@
 | 날짜 | 변경 내용 | 대상 | 사유 |
 |------|----------|------|------|
 | 2026-06-04 | 초기 구성 (be-architect/be-engineer/contract-qa/devops + be-harness 오케스트레이터 + spring-msa-dev/contract-verification/cicd-management 스킬) | 전체 | FE/BE 강제 분리 과도기 지원, 점진적 리팩토링·계약 정합성·CI/CD 관리 |
+| 2026-06-04 | CI/CD를 GHCR push 모델로 재구성: deploy.yml(SSH/SCP 제거, GITHUB_TOKEN+GHCR), 멀티스테이지 Dockerfile, build.gradle(plain jar 비활성화), application-prod.yml(CORS 매핑), docker-compose(image 참조). cicd-management/contract-spec 동기화 | 워크플로우·Docker·설정 + 하네스 스킬 | 배포 방식을 GHCR+온프레미스 자동트리거로 전환, CORS 운영 버그 수정 |
