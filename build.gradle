@@ -32,3 +32,9 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// 실행 가능한 boot jar만 산출하도록 plain jar를 비활성화한다.
+// (Docker 멀티스테이지에서 build/libs/*.jar 가 단일 매칭되도록)
+tasks.named('jar') {
+    enabled = false
+}
