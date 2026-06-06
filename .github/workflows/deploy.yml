@@ -7,12 +7,12 @@ name: Build, Push & Deploy (BE)
 # 보안(중요): 이 레포는 public이며 deploy 잡은 self-hosted 러너에서 돈다.
 #   포크 PR이 서버에서 임의 코드를 실행하지 못하도록,
 #   - pull_request 트리거를 두지 않으며,
-#   - deploy 잡은 "기본 브랜치(master) push" 또는 "수동 실행"에서만 동작한다(아래 if).
+#   - deploy 잡은 "기본 브랜치(main) push" 또는 "수동 실행"에서만 동작한다(아래 if).
 #   태그 push는 이미지 보관(:<tag>)만 하고 배포하지 않는다.
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     tags: ['v*']
   workflow_dispatch:
 
