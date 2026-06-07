@@ -10,13 +10,15 @@ import lombok.Data;
  * @description 채팅방 생성/입장 성공 응답 DTO
  *
  * History:
- * | Date       | Author     | Description |
- * |------------|------------|-------------|
- * | 2026-04-11 | Hanyeol Ko | 최초 작성     |
+ * | Date       | Author     | Description                  |
+ * |------------|------------|------------------------------|
+ * | 2026-04-11 | Hanyeol Ko | 최초 작성                      |
+ * | 2026-06-06 | Hanyeol Ko | participantCount 필드 추가     |
  */
 @Data
 @AllArgsConstructor
 public class RoomEnterResponse {
   private String roomId;
   private String roomName;
+  private int participantCount;
 }

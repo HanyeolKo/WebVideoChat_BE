@@ -55,7 +55,7 @@ public class RoomController {
 
     String roomId = chatRoomManageService.createRoom(roomDTO);
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(new RoomEnterResponse(roomId, request.getTitle()));
+        .body(new RoomEnterResponse(roomId, request.getTitle(), 0));
   }
 
   /**
@@ -71,6 +71,7 @@ public class RoomController {
     if (!roomInfo.getPassword().equals(request.getPassword())) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
-    return ResponseEntity.ok(new RoomEnterResponse(roomInfo.getId(), roomInfo.getTitle()));
+    return ResponseEntity.ok(new RoomEnterResponse(roomInfo.getId(), roomInfo.getTitle(),
+        chatRoomManageService.getParticipantCount(roomInfo.getId())));
   }
 }

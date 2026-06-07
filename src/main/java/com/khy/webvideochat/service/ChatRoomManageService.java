@@ -69,4 +69,17 @@ public class ChatRoomManageService {
     public RoomDTO getRoomInfo(String roomId) {
         return chatRooms.get(roomId);
     }
+
+    /**
+     * 해당 방의 현재 접속 참가자 수 조회
+     * @param roomId
+     * @return  chatUsers 크기(방이 없거나 chatUsers가 null이면 0)
+     */
+    public int getParticipantCount(String roomId) {
+        RoomDTO roomInfo = chatRooms.get(roomId);
+        if (roomInfo == null || roomInfo.getChatUsers() == null) {
+            return 0;
+        }
+        return roomInfo.getChatUsers().size();
+    }
 }
